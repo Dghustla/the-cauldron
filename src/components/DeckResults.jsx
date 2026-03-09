@@ -2,8 +2,15 @@ import { useState } from 'react';
 import ExportPanel from './ExportPanel';
 import ManaPips from './ManaPips';
 
+// Build a Scryfall image URL from card name (fallback for lands without images)
+function scryfallImageUrl(cardName, size = 'small') {
+  const encoded = encodeURIComponent(cardName);
+  return `https://api.scryfall.com/cards/named?exact=${encoded}&format=image&version=${size}`;
+}
+
 export default function DeckResults({ deck, commander, onBrewAgain }) {
   const [expandedCategory, setExpandedCategory] = useState(null);
+  const [enlargedCard, setEnlargedCard] = useState(null);
 
   // Combine deck.cards and deck.lands into allCards for display
   const allCards = [...(deck.cards || []), ...(deck.lands || [])];
@@ -168,32 +175,43 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
                   ? (deck.lands || []).length
                   : cards.length})
               </h4>
-              <span className="text-zinc-400 text-lg">{expandedCategory === categoryName ? '−' : '+'}</span>
+              <span className="text-zinc-400 text-lg">{expandedCategory === categoryName ? 'â' : '+'}</span>
             </button>
 
             {expandedCategory === categoryName && (
               <div className="divide-y divide-zinc-800">
                 {cards
                   .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((card, idx) => (
-                    <div key={idx} className="card-row px-6 py-3 flex items-center justify-between gap-4">
-                      <div className="flex-1 flex items-center gap-3">
-                        <span className="w-6 text-center font-semibold text-zinc-500">{card.qty || 1}×</span>
-                        <div className="flex-1">
-                          <div className="font-medium">{card.name}</div>
-                          <div className="text-xs text-zinc-500">{card.typeLine}</div>
+                  .map((card, idx) => {
+                    const thumbSrc = card.imageSmall || scryfallImageUrl(card.name, 'small');
+                    const normalSrc = card.imageNormal || scryfallImageUrl(card.name, 'normal');
+                    return (
+                      <div key={idx} className="card-row px-6 py-3 flex items-center justify-between gap-4">
+                        <div className="flex-1 flex items-center gap-3">
+                          <span className="w-6 text-center font-semibold text-zinc-500">{card.qty || 1}Ã</span>
+                          <img
+                            src={thumbSrc}
+                            alt={card.name}
+                            loading="lazy"
+                            onClick={() => setEnlargedCard({ name: card.name, src: normalSrc })}
+                            className="w-10 h-14 object-cover rounded cursor-pointer border border-zinc-700 hover:border-green-500 transition-colors flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{card.name}</div>
+                            <div className="text-xs text-zinc-500 truncate">{card.typeLine}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {card.manaCost && <ManaPips manaCost={card.manaCost} />}
+                          {card.price > 0 && (
+                            <div className="w-16 text-right text-sm text-zinc-400">
+                              ${card.price?.toFixed(2)}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        {card.manaCost && <ManaPips manaCost={card.manaCost} />}
-                        {card.price > 0 && (
-                          <div className="w-16 text-right text-sm text-zinc-400">
-                            ${card.price?.toFixed(2)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -202,6 +220,29 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
 
       {/* Export Panel */}
       <ExportPanel deck={deck} commander={commander} />
+
+      {/* Enlarged Card Modal */}
+      {enlargedCard && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setEnlargedCard(null)}
+        >
+          <div className="relative max-w-sm mx-4 animate-[fadeIn_0.15s_ease-out]" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={enlargedCard.src}
+              alt={enlargedCard.name}
+              className="w-full h-auto rounded-xl shadow-2xl border border-zinc-600"
+            />
+            <div className="text-center mt-3 text-sm text-zinc-400">{enlargedCard.name}</div>
+            <button
+              onClick={() => setEnlargedCard(null)}
+              className="absolute -top-3 -right-3 w-8 h-8 bg-zinc-800 hover:bg-zinc-700 rounded-full flex items-center justify-center text-zinc-300 border border-zinc-600 transition-colors"
+            >
+              Ã
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
