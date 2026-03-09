@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-// ââ Palette âââââââââââââââââââââââââââââââââââââââââââââ
+// ── Palette ─────────────────────────────────────────────
 const C = {
   black:  "#131200",
   green:  "#78BC61",
@@ -19,14 +19,14 @@ const BUDGETS = [
 ];
 
 const CATS = {
-  Lands:       { icon: "ð²", color: C.green   },
-  Ramp:        { icon: "â¡", color: "#a0d080"  },
-  "Card Draw": { icon: "ð", color: C.mauve    },
-  Removal:     { icon: "ð", color: "#cc3355"  },
-  Interaction: { icon: "ð¡ï¸", color: C.purple  },
-  Synergy:     { icon: "ð®", color: "#b060d0"  },
-  Finishers:   { icon: "âï¸", color: "#e06040" },
-  Utility:     { icon: "ð§ª", color: "#60b0b0"  },
+  Lands:       { icon: "🌲", color: C.green   },
+  Ramp:        { icon: "⚡", color: "#a0d080"  },
+  "Card Draw": { icon: "📜", color: C.mauve    },
+  Removal:     { icon: "💀", color: "#cc3355"  },
+  Interaction: { icon: "🛡️", color: C.purple  },
+  Synergy:     { icon: "🔮", color: "#b060d0"  },
+  Finishers:   { icon: "⚔️", color: "#e06040" },
+  Utility:     { icon: "🧪", color: "#60b0b0"  },
 };
 
 function Bubble({ style }) {
@@ -77,7 +77,7 @@ export default function TheCauldron() {
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
-  // ââ Autocomplete ââââââââââââââââââââââââââââââââââââââ
+  // ── Autocomplete ──────────────────────────────────────
   const fetchSuggestions = useCallback(async (q) => {
     if (!q || q.trim().length < 2) { setSuggestions([]); setShowSugg(false); return; }
     try {
@@ -101,7 +101,7 @@ export default function TheCauldron() {
     debounceRef.current = setTimeout(() => fetchSuggestions(v), 200);
   };
 
-  // ââ Pick Commander ââââââââââââââââââââââââââââââââââââ
+  // ── Pick Commander ────────────────────────────────────
   const pickCommander = async (name) => {
     setQuery(name);
     setSuggestions([]);
@@ -120,7 +120,7 @@ export default function TheCauldron() {
     } catch { setError("Could not fetch commander. Check your connection."); }
   };
 
-  // ââ Brew ââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── Brew ──────────────────────────────────────────────
   const brew = async () => {
     if (!commander || brewing) return;
     setBrewing(true);
@@ -128,20 +128,20 @@ export default function TheCauldron() {
     setError(null);
 
     try {
-      // Step 1 â Fetch EDHrec synergy data via Netlify function
-      setBrewStep("ð¡ Consulting EDHrec synergy data...");
+      // Step 1 — Fetch EDHrec synergy data via Netlify function
+      setBrewStep("📡 Consulting EDHrec synergy data...");
       let synergyCards = [];
       try {
         const edhRes  = await fetch(`/api/edhrecScrape?commander=${encodeURIComponent(commander.name)}`);
         const edhData = await edhRes.json();
         synergyCards  = edhData.cards || [];
       } catch {
-        // Non-fatal â Claude will build from training knowledge if scrape fails
+        // Non-fatal — Claude will build from training knowledge if scrape fails
         synergyCards = [];
       }
 
-      // Step 2 â Fetch Scryfall bulk prices via Netlify function
-      setBrewStep("ð° Fetching current card prices...");
+      // Step 2 — Fetch Scryfall bulk prices via Netlify function
+      setBrewStep("💰 Fetching current card prices...");
       let priceMap = {};
       try {
         const priceRes  = await fetch(`/api/scryfallPrices`);
@@ -151,8 +151,8 @@ export default function TheCauldron() {
         priceMap = {};
       }
 
-      // Step 3 â Ask Claude to assemble the deck
-      setBrewStep("ð® Claude is assembling your 99...");
+      // Step 3 — Ask Claude to assemble the deck
+      setBrewStep("🔮 Claude is assembling your 99...");
       const cmap   = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green" };
       const ident  = (commander.color_identity || []).map(c => cmap[c] || c).join(", ") || "Colorless";
       const bStr   = budget >= 9999 ? "no budget limit" : `$${budget} total`;
@@ -174,7 +174,7 @@ ${commander.oracle_text ? `Commander text: ${commander.oracle_text}` : ""}
 ${synergyContext}
 ${priceContext}
 
-Return ONLY raw JSON â no markdown, no code fences, no explanation. Format exactly:
+Return ONLY raw JSON — no markdown, no code fences, no explanation. Format exactly:
 {
   "commander": "${commander.name}",
   "strategy": "2-sentence description of the deck's game plan and win conditions",
@@ -192,27 +192,56 @@ Return ONLY raw JSON â no markdown, no code fences, no explanation. Format 
 
 Exact card counts: Lands=36, Ramp=10-12, Card Draw=8-10, Removal=8-10, Interaction=5-6, Synergy=12-16, Finishers=4-6, Utility=4-6.
 Total across ALL categories MUST equal exactly 99.
-${budget < 9999 ? `Keep total cost under $${budget}. Avoid cards over $15 unless essential.` : "No budget limit â use optimal cards."}
+${budget < 9999 ? `Keep total cost under $${budget}. Avoid cards over $15 unless essential.` : "No budget limit — use optimal cards."}
 Only Commander-legal cards. Return raw JSON only.`;
 
-      const aiRes  = await fetch("/api/brewDeck", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-      const aiData = await aiRes.json();
-      const parsed = JSON.parse(aiData.result.replace(/```json|```/g, "").trim());
+      let aiData;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const aiRes = await fetch("/api/brewDeck", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt }),
+          });
+          if (!aiRes.ok) {
+            if (attempt === 0) { setBrewStep("\u26A1 Retrying the brew..."); continue; }
+            throw new Error(`Server responded with ${aiRes.status}`);
+          }
+          aiData = await aiRes.json();
+          break;
+        } catch (fetchErr) {
+          if (attempt === 0) { setBrewStep("\u26A1 Retrying the brew..."); continue; }
+          throw fetchErr;
+        }
+      }
+      if (!aiData?.result) throw new Error("Empty response from the cauldron");
+      const raw = aiData.result.replace(/```json|```/g, "").trim();
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        const match = raw.match(/\{[\s\S]*\}/);
+        if (match) parsed = JSON.parse(match[0]);
+        else throw new Error("Could not parse deck data");
+      }
       setDeck(parsed);
 
     } catch (e) {
-      setError("Sometimes the cauldron needs another stir... give it another go.");
+      const msg = e.message || "";
+      if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("500") || msg.includes("502") || msg.includes("504")) {
+        setError("The brew timed out — Claude may need a moment. Try again or choose a smaller budget.");
+      } else if (msg.includes("parse") || msg.includes("JSON")) {
+        setError("The cauldron's response was garbled. Give it another stir!");
+      } else {
+        setError("Something went wrong brewing your deck. Give it another go!");
+      }
     }
 
     setBrewing(false);
     setBrewStep("");
   };
 
-  // ââ Export ââââââââââââââââââââââââââââââââââââââââââââ
+  // ── Export ────────────────────────────────────────────
   const exportDeck = (dest) => {
     if (!deck) return;
     const lines = Object.values(deck.categories).flat().map(c => `1 ${c.name}`).join("\n");
@@ -233,11 +262,11 @@ Only Commander-legal cards. Return raw JSON only.`;
   const totalCards = deck ? Object.values(deck.categories).reduce((s, a) => s + a.length, 0) : 0;
   const pipBg = { W: "#E8E4C0", U: "#0A55AA", B: "#280F38", R: "#BB1800", G: "#005528" };
 
-  // ââ Render ââââââââââââââââââââââââââââââââââââââââââââ
+  // ── Render ────────────────────────────────────────────
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Pirata+One&family=Cinzel:wght@400;600;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pirata+One&family=Cinzel+Decorative:wght@400;700;900&family=Raleway:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&display=swap');
 
         @keyframes bubbleRise {
           0%   { transform: translateY(0) translateX(0) scale(1);         opacity: 0.9; }
@@ -260,7 +289,7 @@ Only Commander-legal cards. Return raw JSON only.`;
             radial-gradient(ellipse 70% 45% at 50% 105%, rgba(120,188,97,0.12) 0%, transparent 65%),
             ${C.black};
           color: ${C.white};
-          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-family: 'Raleway', 'Segoe UI', sans-serif;
           overflow-x: hidden;
         }
 
@@ -289,7 +318,7 @@ Only Commander-legal cards. Return raw JSON only.`;
           letter-spacing: 0.02em;
         }
         .tagline {
-          font-family: 'Cinzel', serif; font-size: 11px;
+          font-family: 'Cinzel Decorative', serif; font-size: 13px;
           letter-spacing: 0.4em; color: rgba(158,71,112,0.8);
           text-transform: uppercase; margin-top: 8px;
         }
@@ -314,7 +343,7 @@ Only Commander-legal cards. Return raw JSON only.`;
         }
 
         .step-lbl {
-          font-family: 'Cinzel', serif; font-size: 11px;
+          font-family: 'Cinzel Decorative', serif; font-size: 13px;
           letter-spacing: 0.35em; color: ${C.mauve};
           text-transform: uppercase; margin-bottom: 14px;
           display: flex; align-items: center; gap: 10px;
@@ -337,7 +366,7 @@ Only Commander-legal cards. Return raw JSON only.`;
           border-bottom: 2px solid rgba(120,188,97,0.4);
           border-radius: 3px 3px 0 0;
           padding: 16px 18px 16px 50px;
-          color: ${C.white}; font-family: 'Cormorant Garamond', serif;
+          color: ${C.white}; font-family: 'Raleway', sans-serif;
           font-size: 21px; font-style: italic; outline: none;
           transition: border-color 0.25s, box-shadow 0.25s;
           caret-color: ${C.green}; position: relative; z-index: 1;
@@ -362,7 +391,7 @@ Only Commander-legal cards. Return raw JSON only.`;
           position: relative;
         }
         .sugg::before {
-          content: 'ð¿'; position: absolute; left: 16px;
+          content: '🌿'; position: absolute; left: 16px;
           top: 50%; transform: translateY(-50%); font-size: 13px;
           opacity: 0; transition: opacity 0.12s;
         }
@@ -408,7 +437,7 @@ Only Commander-legal cards. Return raw JSON only.`;
         .b-btn {
           padding: 9px 22px; background: rgba(0,0,0,0.45);
           border: 1px solid rgba(99,29,118,0.3); border-radius: 30px;
-          color: rgba(158,71,112,0.75); font-family: 'Cormorant Garamond', serif;
+          color: rgba(158,71,112,0.75); font-family: 'Raleway', sans-serif;
           font-size: 16px; cursor: pointer; transition: all 0.2s;
         }
         .b-btn:hover { border-color: ${C.mauve}; color: ${C.white}; }
@@ -441,7 +470,7 @@ Only Commander-legal cards. Return raw JSON only.`;
 
         .brew-status {
           text-align: center; padding: 28px;
-          font-family: 'Cinzel', serif; font-size: 15px;
+          font-family: 'Cinzel Decorative', serif; font-size: 15px;
           color: ${C.green}; letter-spacing: 0.12em;
           animation: greenBlink 1.4s ease-in-out infinite;
         }
@@ -465,7 +494,7 @@ Only Commander-legal cards. Return raw JSON only.`;
         .stat {
           padding: 5px 14px; background: rgba(0,0,0,0.5);
           border: 1px solid rgba(120,188,97,0.18); border-radius: 20px;
-          font-size: 13px; color: rgba(120,188,97,0.65); font-family: 'Cinzel', serif;
+          font-size: 13px; color: rgba(120,188,97,0.65); font-family: 'Cinzel Decorative', serif;
         }
         .stat b { color: ${C.green}; }
 
@@ -483,7 +512,7 @@ Only Commander-legal cards. Return raw JSON only.`;
           padding: 10px 14px; display: flex; align-items: center; gap: 8px;
           border-bottom: 1px solid rgba(120,188,97,0.07);
         }
-        .cat-title { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; flex: 1; }
+        .cat-title { font-family: 'Cinzel Decorative', serif; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; flex: 1; }
         .cat-count { font-size: 11px; color: rgba(251,251,251,0.28); }
         .card-row {
           padding: 6px 14px; font-size: 14px; color: rgba(251,251,251,0.68);
@@ -502,8 +531,8 @@ Only Commander-legal cards. Return raw JSON only.`;
         }
         .export-lbl { font-family: 'Pirata One', cursive; font-size: 15px; letter-spacing: 0.12em; color: ${C.purple}; margin-right: 6px; }
         .ex-btn {
-          padding: 10px 22px; border-radius: 3px; font-family: 'Cinzel', serif;
-          font-size: 12px; letter-spacing: 0.06em; cursor: pointer;
+          padding: 10px 22px; border-radius: 3px; font-family: 'Cinzel Decorative', serif;
+          font-size: 13px; letter-spacing: 0.06em; cursor: pointer;
           transition: all 0.2s; border: 1px solid; position: relative; overflow: hidden;
         }
         .ex-btn.tcg  { background: rgba(0,45,115,0.3);  border-color: rgba(50,110,245,0.4); color: #88aaff; }
@@ -521,7 +550,7 @@ Only Commander-legal cards. Return raw JSON only.`;
       `}</style>
 
       <div className="app">
-        {/* ââ Cauldron Scene ââ */}
+        {/* ── Cauldron Scene ── */}
         <div className="scene">
           <div className="cauldron-wrap">
             <div className="bubble-zone">
@@ -553,8 +582,8 @@ Only Commander-legal cards. Return raw JSON only.`;
               <line x1="120" y1="178" x2="120" y2="196" stroke="#3a2e08" strokeWidth="8" strokeLinecap="round"/>
               <line x1="168" y1="174" x2="185" y2="194" stroke="#3a2e08" strokeWidth="8" strokeLinecap="round"/>
               <path d="M46 116 Q40 176 120 180 Q200 176 194 116 Z" fill="#1e1a04" stroke={C.purple} strokeWidth="2.5"/>
-              <text x="70"  y="158" fontSize="13" fill="rgba(120,188,97,0.22)" fontFamily="serif" letterSpacing="4">á±á¢á¾</text>
-              <text x="122" y="164" fontSize="11" fill="rgba(158,71,112,0.22)" fontFamily="serif" letterSpacing="3">áá¨á·</text>
+              <text x="70"  y="158" fontSize="13" fill="rgba(120,188,97,0.22)" fontFamily="serif" letterSpacing="4">ᚱᚢᚾ</text>
+              <text x="122" y="164" fontSize="11" fill="rgba(158,71,112,0.22)" fontFamily="serif" letterSpacing="3">ᛗᚨᚷ</text>
               <ellipse cx="120" cy="116" rx="78" ry="25" fill="#2a2308" stroke={C.purple} strokeWidth="2"/>
               <ellipse cx="120" cy="116" rx="70" ry="20" fill="#08180a"/>
               <ellipse cx="120" cy="116" rx="70" ry="20" fill="url(#brew)"/>
@@ -570,16 +599,16 @@ Only Commander-legal cards. Return raw JSON only.`;
           <div className="hero-text">
             <h1>The Cauldron</h1>
             <p className="tagline">Commander Deck Auto-Brewer</p>
-            <div className="runes">á¦ á¨ á á á¾ á á¹ á á±</div>
+            <div className="runes">ᚦ ᚨ ᛚ ᛖ ᚾ ᛏ ᚹ ᛟ ᚱ</div>
           </div>
         </div>
 
-        {/* ââ Panel ââ */}
+        {/* ── Panel ── */}
         <div className="panel">
           <div className="grimoire">
-            <div className="step-lbl">I â Speak the Commander's Name</div>
+            <div className="step-lbl">I — Speak the Commander's Name</div>
             <div className="search-outer" ref={wrapRef}>
-              <span className="search-icon">ð®</span>
+              <span className="search-icon">🔮</span>
               <input
                 className="search-input"
                 type="text"
@@ -625,7 +654,7 @@ Only Commander-legal cards. Return raw JSON only.`;
             )}
 
             <div className="budget-section">
-              <div className="step-lbl">II â Name Your Price</div>
+              <div className="step-lbl">II — Name Your Price</div>
               <div className="budget-btns">
                 {BUDGETS.map(b => (
                   <button key={b.value} className={`b-btn ${budget === b.value ? "on" : ""}`}
@@ -651,12 +680,12 @@ Only Commander-legal cards. Return raw JSON only.`;
             </button>
           </div>
 
-          {error && <div className="err">â ï¸ {error}</div>}
-          {brewing && <div className="brew-status">{brewStep || "ð¿ Consulting the grimoire..."}</div>}
+          {error && <div className="err">⚠️ {error}</div>}
+          {brewing && <div className="brew-status">{brewStep || "🌿 Consulting the grimoire..."}</div>}
 
           {deck && !brewing && (
             <div className="deck">
-              {deck.strategy && <div className="strategy-box">ð {deck.strategy}</div>}
+              {deck.strategy && <div className="strategy-box">📜 {deck.strategy}</div>}
               <div className="stats-row">
                 <div className="stat">Commander: <b>{deck.commander}</b></div>
                 <div className="stat">Cards: <b>{totalCards}</b></div>
@@ -667,7 +696,7 @@ Only Commander-legal cards. Return raw JSON only.`;
                   <div key={cat} className="cat-card"
                     style={{ borderTop: `3px solid ${CATS[cat]?.color || C.green}` }}>
                     <div className="cat-head">
-                      <span>{CATS[cat]?.icon || "ð"}</span>
+                      <span>{CATS[cat]?.icon || "🃏"}</span>
                       <span className="cat-title" style={{ color: CATS[cat]?.color || C.green }}>{cat}</span>
                       <span className="cat-count">{cards.length}</span>
                     </div>
@@ -681,20 +710,20 @@ Only Commander-legal cards. Return raw JSON only.`;
                 ))}
               </div>
               <div className="export-bar">
-                <span className="export-lbl">âï¸ Send to Cart</span>
+                <span className="export-lbl">⚗️ Send to Cart</span>
                 <button className="ex-btn tcg" onClick={() => exportDeck("tcg")}>
-                  {copied === "tcg" && <span className="ok-badge">â Copied!</span>}
-                  TCGPlayer â
+                  {copied === "tcg" && <span className="ok-badge">✓ Copied!</span>}
+                  TCGPlayer →
                 </button>
                 <button className="ex-btn ck" onClick={() => exportDeck("ck")}>
-                  {copied === "ck" && <span className="ok-badge">â Copied!</span>}
-                  Card Kingdom â
+                  {copied === "ck" && <span className="ok-badge">✓ Copied!</span>}
+                  Card Kingdom →
                 </button>
                 <button className="ex-btn mox" onClick={() => exportDeck("mox")}>
-                  {copied === "mox" && <span className="ok-badge">â Copied!</span>}
-                  Moxfield â
+                  {copied === "mox" && <span className="ok-badge">✓ Copied!</span>}
+                  Moxfield →
                 </button>
-                <span className="clip-note">List auto-copies to clipboard â¦</span>
+                <span className="clip-note">List auto-copies to clipboard ✦</span>
               </div>
             </div>
           )}
