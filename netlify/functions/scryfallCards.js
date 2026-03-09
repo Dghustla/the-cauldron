@@ -76,6 +76,8 @@ export default async (request, context) => {
         colors: card.color_identity || [],
         price: parseFloat(card.prices?.usd || 0) || 0,
         image: card.image_uris?.art_crop || '',
+        imageSmall: card.image_uris?.small || '',
+        imageNormal: card.image_uris?.normal || '',
         rarity: card.rarity || 'unknown',
         set: card.set?.toUpperCase() || '',
         roles: roles,
