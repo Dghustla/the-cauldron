@@ -110,11 +110,18 @@ export default async (request, context) => {
  * Examples:
  * "Atraxa, Praetors' Voice" -> "atraxa-praetors-voice"
  * "Zur the Enchanter" -> "zur-the-enchanter"
+ * "Bebop & Rocksteady" -> "bebop-rocksteady"
+ * "Nashi, Moon's Legacy // Nashi, Moon's Legacy" -> "nashi-moons-legacy"
  */
 function slugifyCommanderName(name) {
-  return name
+  // For double-faced cards, use only the front face
+  const frontFace = name.split('//')[0].trim();
+  return frontFace
     .toLowerCase()
-    .replace(/[',]/g, '') // Remove apostrophes and commas
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/[^a-z0-9-]/g, ''); // Remove other special characters
+    .replace(/[',]/g, '')    // Remove apostrophes and commas
+    .replace(/&/g, '')       // Remove ampersands explicitly
+    .replace(/\s+/g, '-')   // Replace spaces with hyphens
+    .replace(/[^a-z0-9-]/g, '') // Remove other special characters
+    .replace(/-+/g, '-')    // Collapse multiple hyphens into one
+    .replace(/^-|-$/g, ''); // Trim leading/trailing hyphens
 }
