@@ -25,7 +25,7 @@ export default function App() {
       const edhrecData = await edhrecRes.json();
 
       if (!edhrecData.cards || edhrecData.cards.length === 0) {
-        throw new Error('No card recommendations found for this commander. Try a more popular commander.');
+        throw new Error(`Could not find EDHREC data for "${commander.name}". The name may not match EDHREC's records â try the exact English card name.`);
       }
 
       setBrewStep('Gathering card details...');
