@@ -17,14 +17,18 @@ export default function App() {
     try {
       setError('');
       setBrewing(true);
-      setBrewStep('Fetching synergy data from EDHREC...');
+      setBrewStep('Building your deck...');
 
       // Step 1: Fetch EDHREC data
       const edhrecRes = await fetch(`/api/edhrecData?commander=${encodeURIComponent(commander.name)}`);
-      if (!edhrecRes.ok) throw new Error('Failed to fetch EDHREC data');
+      if (!edhrecRes.ok) throw new Error('Could not find data for this commander. Try a different one.');
       const edhrecData = await edhrecRes.json();
 
-      setBrewStep('Analyzing card data from Scryfall...');
+      if (!edhrecData.cards || edhrecData.cards.length === 0) {
+        throw new Error('No card recommendations found for this commander. Try a more popular commander.');
+      }
+
+      setBrewStep('Gathering card details...');
 
       // Step 2: Fetch Scryfall cards
       const scryfallRes = await fetch('/api/scryfallCards', {
@@ -32,10 +36,10 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cardNames: edhrecData.cards.map(c => c.name) })
       });
-      if (!scryfallRes.ok) throw new Error('Failed to fetch Scryfall data');
+      if (!scryfallRes.ok) throw new Error('Could not load card details. Please try again.');
       const scryfallData = await scryfallRes.json();
 
-      setBrewStep('Brewing your deck...');
+      setBrewStep('Optimizing your brew...');
 
       // Step 3: Build the deck
       const builtDeck = buildDeck(commander, edhrecData.cards, scryfallData.cards, {
@@ -46,7 +50,7 @@ export default function App() {
       setDeck(builtDeck);
       setBrewStep('');
     } catch (err) {
-      setError(err.message || 'Failed to brew deck');
+      setError(err.message || 'Something went wrong. Please try again.');
       setBrewStep('');
     } finally {
       setBrewing(false);
