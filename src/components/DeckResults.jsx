@@ -109,6 +109,9 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
           <div className="text-2xl font-bold text-green-400">
             ${deck.stats?.estimatedCost?.toFixed(0) || '0'}
           </div>
+          <div className="text-[10px] text-zinc-600 mt-1 leading-tight">
+            Based on lowest printing. Actual cost may vary by edition & condition.
+          </div>
         </div>
         <div className="stat-card">
           <div className="text-xs text-zinc-500 mb-2">Strategy</div>
@@ -130,8 +133,7 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
             const label = idx === 7 ? '7+' : idx.toString();
             const barHeight = maxCurveCount > 0 ? (count / maxCurveCount) * 100 : 0;
             return (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-                <div className="text-xs font-semibold text-zinc-300">{count}</div>
+              <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">                <div className="text-xs font-semibold text-zinc-300">{count}</div>
                 <div
                   className="w-full bg-green-500/70 rounded-t-md transition-all hover:bg-green-500"
                   style={{ height: `${Math.max(barHeight, 4)}%`, minHeight: count > 0 ? '8px' : '2px' }}
