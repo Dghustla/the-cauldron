@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import ExportPanel from './ExportPanel';
 import ManaPips from './ManaPips';
+import { tcgCardUrl } from '../config/monetization';
+import AdBanner from './AdBanner';
 
 // Build a Scryfall image URL from card name (fallback for lands without images)
 function scryfallImageUrl(cardName, size = 'small') {
@@ -75,7 +77,8 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
             <img
               src={commander.image_uris.normal}
               alt={commander.name}
-              className="w-24 h-auto object-cover rounded-lg shadow-lg border border-zinc-700"
+              onClick={() => setEnlargedCard({ name: commander.name, src: commander.image_uris.normal })}
+              className="w-24 h-auto object-cover rounded-lg shadow-lg border border-zinc-700 cursor-pointer hover:border-green-500 transition-colors"
             />
           )}
           <div>
@@ -125,6 +128,9 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
         </div>
       </div>
 
+      {/* Ad Slot — between stats and mana curve */}
+      <AdBanner format="banner" />
+
       {/* Mana Curve */}
       <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
         <h3 className="font-semibold text-lg mb-6">Mana Curve</h3>
@@ -133,7 +139,8 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
             const label = idx === 7 ? '7+' : idx.toString();
             const barHeight = maxCurveCount > 0 ? (count / maxCurveCount) * 100 : 0;
             return (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">                <div className="text-xs font-semibold text-zinc-300">{count}</div>
+              <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                <div className="text-xs font-semibold text-zinc-300">{count}</div>
                 <div
                   className="w-full bg-green-500/70 rounded-t-md transition-all hover:bg-green-500"
                   style={{ height: `${Math.max(barHeight, 4)}%`, minHeight: count > 0 ? '8px' : '2px' }}
@@ -164,6 +171,9 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
         </div>
       </div>
 
+      {/* Ad Slot — between role distribution and card list */}
+      <AdBanner format="inline" />
+
       {/* Card List */}
       <div className="space-y-3">
         {categories.map(([categoryName, cards]) => (
@@ -177,7 +187,7 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
                   ? (deck.lands || []).length
                   : cards.length})
               </h4>
-              <span className="text-zinc-400 text-lg">{expandedCategory === categoryName ? 'â' : '+'}</span>
+              <span className="text-zinc-400 text-lg">{expandedCategory === categoryName ? '−' : '+'}</span>
             </button>
 
             {expandedCategory === categoryName && (
@@ -190,7 +200,7 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
                     return (
                       <div key={idx} className="card-row px-6 py-3 flex items-center justify-between gap-4">
                         <div className="flex-1 flex items-center gap-3">
-                          <span className="w-6 text-center font-semibold text-zinc-500">{card.qty || 1}Ã</span>
+                          <span className="w-6 text-center font-semibold text-zinc-500">{card.qty || 1}×</span>
                           <img
                             src={thumbSrc}
                             alt={card.name}
@@ -210,6 +220,15 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
                               ${card.price?.toFixed(2)}
                             </div>
                           )}
+                          <a
+                            href={tcgCardUrl(card.name)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] px-2 py-1 bg-blue-900/40 hover:bg-blue-800/60 text-blue-300 rounded transition-colors whitespace-nowrap flex-shrink-0"
+                            title={`Buy ${card.name} on TCGPlayer`}
+                          >
+                            Buy
+                          </a>
                         </div>
                       </div>
                     );
@@ -240,7 +259,7 @@ export default function DeckResults({ deck, commander, onBrewAgain }) {
               onClick={() => setEnlargedCard(null)}
               className="absolute -top-3 -right-3 w-8 h-8 bg-zinc-800 hover:bg-zinc-700 rounded-full flex items-center justify-center text-zinc-300 border border-zinc-600 transition-colors"
             >
-              Ã
+              ×
             </button>
           </div>
         </div>
