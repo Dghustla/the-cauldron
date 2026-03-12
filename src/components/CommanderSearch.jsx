@@ -1,11 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import ManaPips from './ManaPips';
 
+// Build a Scryfall image URL from card name
+function scryfallImageUrl(cardName, size = 'small') {
+  const encoded = encodeURIComponent(cardName);
+  return `https://api.scryfall.com/cards/named?exact=${encoded}&format=image&version=${size}`;
+}
+
 export default function CommanderSearch({ commander, onSelect }) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [enlargedCard, setEnlargedCard] = useState(null);
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
 
@@ -103,7 +110,8 @@ export default function CommanderSearch({ commander, onSelect }) {
             <img
               src={commander.image_uris.normal}
               alt={commander.name}
-              className="w-32 h-48 object-cover rounded-lg shadow-lg border border-zinc-700"
+              onClick={() => setEnlargedCard({ name: commander.name, src: commander.image_uris.normal })}
+              className="w-32 h-48 object-cover rounded-lg shadow-lg border border-zinc-700 cursor-pointer hover:border-green-500 transition-colors"
             />
           )}
           <div className="flex-1 space-y-3">
@@ -163,6 +171,29 @@ export default function CommanderSearch({ commander, onSelect }) {
             </button>
           </div>
         </div>
+
+        {/* Enlarged Card Modal */}
+        {enlargedCard && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            onClick={() => setEnlargedCard(null)}
+          >
+            <div className="relative max-w-sm mx-4 animate-[fadeIn_0.15s_ease-out]" onClick={(e) => e.stopPropagation()}>
+              <img
+                src={enlargedCard.src}
+                alt={enlargedCard.name}
+                className="w-full h-auto rounded-xl shadow-2xl border border-zinc-600"
+              />
+              <div className="text-center mt-3 text-sm text-zinc-400">{enlargedCard.name}</div>
+              <button
+                onClick={() => setEnlargedCard(null)}
+                className="absolute -top-3 -right-3 w-8 h-8 bg-zinc-800 hover:bg-zinc-700 rounded-full flex items-center justify-center text-zinc-300 border border-zinc-600 transition-colors"
+              >
+                Ã
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -183,16 +214,23 @@ export default function CommanderSearch({ commander, onSelect }) {
         <div className="absolute right-3 top-3 animate-spin w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full"></div>
       )}
 
-      {/* Suggestions Dropdown */}
+      {/* Suggestions Dropdown â with card thumbnails */}
       {isOpen && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto fade-in">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto fade-in">
           {suggestions.map((cardName, idx) => (
             <button
               key={idx}
               onClick={() => selectSuggestion(cardName)}
-              className="w-full px-4 py-3 text-left hover:bg-zinc-700 transition-colors border-b border-zinc-700 last:border-0 text-sm"
+              className="w-full px-4 py-2.5 text-left hover:bg-zinc-700 transition-colors border-b border-zinc-700 last:border-0 text-sm flex items-center gap-3"
             >
-              {cardName}
+              <img
+                src={scryfallImageUrl(cardName, 'small')}
+                alt=""
+                loading="lazy"
+                className="w-8 h-11 object-cover rounded flex-shrink-0 border border-zinc-600"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <span>{cardName}</span>
             </button>
           ))}
         </div>
