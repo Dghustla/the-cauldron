@@ -3,6 +3,8 @@
  * Pure JavaScript module for building balanced 100-card Commander decks
  */
 
+import { getCardType } from '../utils/cardTypes.js';
+
 /**
  * Main deck building function
  * @param {Object} commanderData - { name, color_identity, cmc, type_line, image, mana_cost }
@@ -12,6 +14,16 @@
  * @returns {Object} Complete deck object
  */
 export function buildDeck(commanderData, edhrecCards, scryfallCards, options = {}) {
+  if (!commanderData || !commanderData.name || !Array.isArray(commanderData.color_identity)) {
+    throw new Error('commanderData must include name and color_identity array');
+  }
+  if (!Array.isArray(edhrecCards)) {
+    throw new Error('edhrecCards must be an array');
+  }
+  if (!Array.isArray(scryfallCards)) {
+    throw new Error('scryfallCards must be an array');
+  }
+
   const { budget = 100, powerLevel = 'focused' } = options;
 
   // 1. Merge EDHREC synergy with Scryfall data
@@ -152,7 +164,7 @@ export function buildDeck(commanderData, edhrecCards, scryfallCards, options = {
  * Get price threshold based on budget
  * Budget null = Unlimited, no price cap
  */
-function getPriceThreshold(budget) {
+export function getPriceThreshold(budget) {
   // Unlimited budget (null or undefined) = no price cap
   if (budget === null || budget === undefined) return Infinity;
   if (budget === 0 || budget === Infinity) return Infinity;
@@ -168,7 +180,7 @@ function getPriceThreshold(budget) {
  * Calculate a card's score based on synergy and power level
  * Higher score = more likely to be included
  */
-function calculateCardScore(card, powerLevel) {
+export function calculateCardScore(card, powerLevel) {
   let score = (card.synergy || 0) * 100; // Base: EDHREC synergy
 
   const text = (card.oracleText || '').toLowerCase();
@@ -242,7 +254,7 @@ function calculateCardScore(card, powerLevel) {
  * Get role slot targets based on power level
  * Returns [min, max] for each role
  */
-function getRoleTargets(powerLevel, colorIdentity) {
+export function getRoleTargets(powerLevel, colorIdentity) {
   const hasBlue = colorIdentity.includes('U');
 
   switch (powerLevel) {
@@ -301,7 +313,7 @@ function getRoleTargets(powerLevel, colorIdentity) {
 /**
  * Check if card color identity is compatible with commander
  */
-function isColorIdentityCompatible(cardColors, commanderColors) {
+export function isColorIdentityCompatible(cardColors, commanderColors) {
   if (!cardColors || cardColors.length === 0) return true; // Colorless is compatible
   return cardColors.every((color) => commanderColors.includes(color));
 }
@@ -322,7 +334,7 @@ function stableSort(array, compareFn) {
 /**
  * Select cards with a specific role
  */
-function selectCardsWithRole(cards, role, minCount, maxCount, alreadySelected) {
+export function selectCardsWithRole(cards, role, minCount, maxCount, alreadySelected) {
   const cardNames = new Set(alreadySelected.map((c) => c.name));
   const candidates = cards.filter(
     (card) =>
@@ -348,7 +360,7 @@ function selectTopCards(cards, count, alreadySelected) {
 /**
  * Calculate color distribution from nonland cards
  */
-function calculateColorDistribution(cards) {
+export function calculateColorDistribution(cards) {
   const distribution = { W: 0, U: 0, B: 0, R: 0, G: 0 };
 
   for (const card of cards) {
@@ -369,7 +381,7 @@ function calculateColorDistribution(cards) {
 /**
  * Build mana base with lands appropriate to budget and power level
  */
-function buildManaBase(colorIdentity, colorDistribution, budget, landCount, powerLevel) {
+export function buildManaBase(colorIdentity, colorDistribution, budget, landCount, powerLevel) {
   const lands = [];
   const landNames = new Set();
 
@@ -636,7 +648,7 @@ function getLandsForColorPairs(colorIdentity, landMap) {
 /**
  * Calculate deck statistics
  */
-function calculateStats(cards, lands, commanderData, budget) {
+export function calculateStats(cards, lands, commanderData, budget) {
   // Average mana cost (excluding lands)
   const totalCmc = cards.reduce((sum, card) => sum + (card.cmc || 0), 0);
   const avgManaCost = cards.length > 0 ? totalCmc / cards.length : 0;
@@ -713,7 +725,7 @@ function calculateStats(cards, lands, commanderData, budget) {
 /**
  * Detect deck strategy from commander and cards
  */
-function detectStrategy(commanderData, cards) {
+export function detectStrategy(commanderData, cards) {
   const commanderName = commanderData.name.toLowerCase();
 
   // Check for voltron (pump + equipment + auras)
@@ -728,10 +740,13 @@ function detectStrategy(commanderData, cards) {
   }
 
   // Check for tokens (create token, token doublers)
+  const tokenCards = cards.filter((c) =>
+    c.oracleText && /create[^.]*\btoken/i.test(c.oracleText)
+  ).length;
   if (
     commanderName.includes('token') ||
     commanderName.includes('saproling') ||
-    cards.some((c) => c.oracleText && c.oracleText.includes('create'))
+    tokenCards >= 10
   ) {
     return 'Token Generation - mass board creation';
   }
@@ -794,19 +809,5 @@ function detectStrategy(commanderData, cards) {
   return 'Goodstuff - strong synergies and card advantage';
 }
 
-/**
- * Get card type from type line
- */
-export function getCardType(typeLine) {
-  const type = (typeLine || '').toLowerCase();
-
-  if (/creature/.test(type)) return 'creature';
-  if (/instant/.test(type)) return 'instant';
-  if (/sorcery/.test(type)) return 'sorcery';
-  if (/enchantment/.test(type)) return 'enchantment';
-  if (/artifact/.test(type)) return 'artifact';
-  if (/planeswalker/.test(type)) return 'planeswalker';
-  if (/land/.test(type)) return 'land';
-
-  return 'other';
-}
+// Re-export getCardType from shared module for backwards compatibility
+export { getCardType } from '../utils/cardTypes.js';

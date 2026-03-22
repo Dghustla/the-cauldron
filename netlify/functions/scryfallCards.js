@@ -4,6 +4,8 @@
  * Body: { cards: ["Sol Ring", "Lightning Bolt", ...] }
  */
 
+import { getCardType } from '../../src/utils/cardTypes.js';
+
 const SCRYFALL_COLLECTION_URL = 'https://api.scryfall.com/cards/collection';
 const BATCH_SIZE = 75;
 const REQUEST_DELAY = 100; // ms between requests
@@ -97,7 +99,7 @@ export default async (request, context) => {
     console.error('scryfallCards error:', error);
     return new Response(
       JSON.stringify({ cards: [], error: error.message }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };
@@ -105,7 +107,7 @@ export default async (request, context) => {
 /**
  * Extract functional roles from oracle text
  */
-function extractRoles(oracleText) {
+export function extractRoles(oracleText) {
   const roles = [];
 
   // Normalize text for matching
@@ -164,23 +166,6 @@ function extractRoles(oracleText) {
   }
 
   return roles;
-}
-
-/**
- * Determine card type from type line
- */
-function getCardType(typeLine) {
-  const type = typeLine.toLowerCase();
-
-  if (/creature/.test(type)) return 'creature';
-  if (/instant/.test(type)) return 'instant';
-  if (/sorcery/.test(type)) return 'sorcery';
-  if (/enchantment/.test(type)) return 'enchantment';
-  if (/artifact/.test(type)) return 'artifact';
-  if (/planeswalker/.test(type)) return 'planeswalker';
-  if (/land/.test(type)) return 'land';
-
-  return 'other';
 }
 
 /**

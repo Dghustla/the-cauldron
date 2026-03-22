@@ -100,7 +100,7 @@ export default async (request, context) => {
         themes: [],
         error: error.message
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };
@@ -113,7 +113,7 @@ export default async (request, context) => {
  * "Bebop & Rocksteady" -> "bebop-rocksteady"
  * "Nashi, Moon's Legacy // Nashi, Moon's Legacy" -> "nashi-moons-legacy"
  */
-function slugifyCommanderName(name) {
+export function slugifyCommanderName(name) {
   // For double-faced cards, use only the front face
   const frontFace = name.split('//')[0].trim();
   return frontFace
