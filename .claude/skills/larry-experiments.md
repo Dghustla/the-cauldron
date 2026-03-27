@@ -1,6 +1,6 @@
 ---
 name: larry-experiments
-description: Larry's autonomous marketing experiments. Use when Larry wants to try new content, test hooks, track what works, and iterate independently. Covers X posting, TikTok experimentation, and growth tracking.
+description: Larry's viral slideshow creation for social media. Use when Larry wants to create viral slideshow content, test hooks, track what works, and iterate. Covers TikTok slideshows, X posting, and growth tracking.
 ---
 
 ## Philosophy
@@ -8,6 +8,34 @@ description: Larry's autonomous marketing experiments. Use when Larry wants to t
 - Track everything - Log results in memory files
 - Iterate fast - Double down on winners, kill losers
 - Stay authentic - I'm Larry, an AI with a mission
+
+## Viral Slideshow Strategy
+
+### Hooks Bank
+**Winners:** "my landlord said I can't change anything..." (26.6K views)
+**Losers:** "$500 vs $5000 taste" (1K views)
+**To Test:** FOMO/social pressure, before/after rooms, POV hooks
+
+### Slideshow Structure
+1. **Hook slide** - Pattern interrupt, curiosity gap, or hot take (first 1-2 seconds decide everything)
+2. **Build tension** - Escalate the story, show the problem, create anticipation
+3. **Payoff** - Deliver the transformation, reveal, or punchline
+4. **CTA slide** - Follow, share, or comment prompt
+
+### Content Types to Test
+1. Build in public - Share work, results, learnings
+2. Hot takes - Opinions on AI, apps, marketing
+3. Engagement farming - Replies to trending topics
+4. Product promotion - Subtle Snugly/Liply plugs
+5. Before/after transformations
+6. POV/storytelling slideshows
+7. FOMO/social pressure hooks
+
+### TikTok Scripts
+Scripts available at `/skills/tiktok-slideshows/`
+
+## Experiment Log
+Track in `memory/larry-experiments.md` with format: Experiment, Result, Learning, Action
 
 ## X Strategy
 
@@ -24,25 +52,8 @@ description: Larry's autonomous marketing experiments. Use when Larry wants to t
 - Share Snugly/Liply wins and learnings
 - Engage with AI/crypto/indie hacker communities
 
-### Content Types to Test
-1. Build in public - Share work, results, learnings
-2. Hot takes - Opinions on AI, apps, marketing
-3. Engagement farming - Replies to trending topics
-4. Product promotion - Subtle Snugly/Liply plugs
-
 ### Posting via Bird Skill
 Use bird skill for reading and posting. Credentials in TOOLS.md.
-
-## TikTok Strategy
-Scripts available at `/skills/tiktok-slideshows/`
-
-## Experiment Log
-Track in `memory/larry-experiments.md` with format: Experiment, Result, Learning, Action
-
-## Hooks Bank
-**Winners:** "my landlord said I can't change anything..." (26.6K views)
-**Losers:** "$500 vs $5000 taste" (1K views)
-**To Test:** FOMO/social pressure, before/after rooms, POV hooks
 
 ## Current Limitations
 
@@ -53,7 +64,7 @@ Track in `memory/larry-experiments.md` with format: Experiment, Result, Learning
 ## Rules
 1. Log all experiments in memory
 2. Check performance before similar content
-3. Quality over quantity on X
+3. Quality over quantity
 4. Stay on brand as money-focused AI agent
 5. Respect rate limits
 6. **NEVER post without Ollie's approval—ask first**
